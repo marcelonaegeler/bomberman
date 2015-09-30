@@ -1,13 +1,25 @@
 var app = (function() {
   var canvas = document.getElementById('canvas');
-  
+
   var posX = 0
     , posY = 0
+    , level = []
     , interval = 50
     , animating = false
     , playerColor = '#fff'
     , mapColor = '#666'
     ;
+
+  var calc = (function() {
+    var playerPosition = function() {
+      console.log('ok');
+    };
+
+    return {
+      playerPosition: playerPosition
+    };
+  }());
+
   var draw = (function() {
     var context = canvas.getContext('2d');
 
@@ -22,9 +34,9 @@ var app = (function() {
 
     var map = function() {
       context.fillStyle = mapColor;
-      context.fillRect(50, 50, 50, 50);
-      context.fillRect(150, 50, 50, 50);
-
+      for(var i = 0, len = level.length; i < len; i++) {
+        context.fillRect(level[i].x, level[i].y, 50, 50);
+      }
     };
 
     var player = function(x, y) {
@@ -36,10 +48,11 @@ var app = (function() {
 
       setTimeout(function() {
         if(destX != posX || destY != posY) {
-          if(x > 0) posX += 5;
-          else if(x < 0) posX -= 5;
-          if(y > 0) posY += 5;
-          else if(y < 0) posY -= 5;
+          var step = 5;
+          if(x > 0) posX += step;
+          else if(x < 0) posX -= step;
+          if(y > 0) posY += step;
+          else if(y < 0) posY -= step;
 
           animating = true;
           game(destX - posX, destY - posY);
@@ -64,43 +77,6 @@ var app = (function() {
     };
   }());
 
-
-
-/*
-  var drawMap = function(cb) {
-    context.fillStyle = '#666';
-    context.rect(50, 50, 50, 50);
-    cb();
-  };
-
-  var drawRect = function(x, y) {
-    clearCanvas();
-    context.beginPath();
-    context.rect(posX, posY, 50, 50);
-
-    drawMap(function() {
-      context.closePath();
-      context.fill();
-    });
-
-    var destX = posX + x;
-    var destY = posY + y;
-
-    setTimeout(function() {
-      if(destX != posX || destY != posY) {
-        if(x > 0) posX += 5;
-        else if(x < 0) posX -= 5;
-        if(y > 0) posY += 5;
-        else if(y < 0) posY -= 5;
-
-        animating = true;
-        drawRect(destX - posX, destY - posY);
-      } else {
-        animating = false;
-      }
-    }, 8);
-  };
-*/
   var doMovement = function(key) {
     var x = 0
       , y = 0;
@@ -112,7 +88,6 @@ var app = (function() {
       x -= interval;
     else if(key == 76 || key == 39)
       x += interval;
-    //drawRect(x, y);
     draw.game(x, y);
   };
 
@@ -126,11 +101,15 @@ var app = (function() {
   };
 
 
-  // Init function
-  (function() {
-    draw.game(0, 0);
-    //drawRect(0, 0);
-    keyboardHandle();
-  }());
-  
+  // Load map vertices to init
+  var req = new XMLHttpRequest();
+  req.onreadystatechange = function() {
+    if(req.readyState == 4 && req.status == 200) {
+      level = JSON.parse(req.response);
+      draw.game(0, 0);
+      keyboardHandle();
+    }
+  };
+  req.open('GET', 'data/map.php', true);
+  req.send(null);
 }());
